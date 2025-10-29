@@ -15,7 +15,8 @@ namespace TestingBiblioteca.PruebasUnitarias.Validaciones
         [DataRow("")]
         [DataRow("    ")]
         [DataRow(null)]
-        public void IsValid_RetornaExitoso_SiValueEsVacio(string value)
+        [DataRow("Uriel")]
+        public void IsValid_RetornaExitoso_SiValueNoTieneLaPrimeraLetraMayuscula(string value) 
         {
             //Preparacion
             var primeraLetraMayusuculaAttribute = new PrimeraLetraMayusculaAttribute();
@@ -26,6 +27,21 @@ namespace TestingBiblioteca.PruebasUnitarias.Validaciones
 
             //Verificacion
             Assert.AreEqual(expected: ValidationResult.Success, actual: resultado);
+        }
+
+        [TestMethod]
+        [DataRow("uriel")]
+        public void IsValid_RetornaError_SiValueTieneLaPrimeraLetraMinuscula(string value)
+        { 
+            //Preparacion
+            var primeraLetraMayusuculaAttribute = new PrimeraLetraMayusculaAttribute();
+            var validationContext = new ValidationContext(new object());
+
+            //Prueba
+            var resultado = primeraLetraMayusuculaAttribute.GetValidationResult(value, validationContext);
+
+            //Verificacion
+            Assert.AreEqual(expected: "La primera letra debe ser mayuscula", actual: resultado!.ErrorMessage);
         }
     }
 }
