@@ -17,15 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 //Area de servicios
 
-//builder.Services.AddOutputCache(options =>
-//{
-//    options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(60);
-//});
-
-builder.Services.AddStackExchangeRedisOutputCache(options =>
+builder.Services.AddOutputCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("redis");
+    options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(60);
 });
+
+//builder.Services.AddStackExchangeRedisOutputCache(options =>
+//{
+//    options.Configuration = builder.Configuration.GetConnectionString("redis");
+//});
 
 #region Encriptacion
 
@@ -51,7 +51,6 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<FiltroTiempoEjecucion>();
     options.Conventions.Add(new ConvencionAgruparPorVersion());
 }).AddNewtonsoftJson();
 
@@ -68,7 +67,6 @@ builder.Services.AddScoped<UserManager<Usuario>>();
 builder.Services.AddScoped<SignInManager<Usuario>>();
 builder.Services.AddTransient<IServicioUsuarios, ServicioUsuarios>();
 builder.Services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
-builder.Services.AddScoped<MiFiltroDeAccion>();
 builder.Services.AddScoped<FiltroValidacionLibro>();
 builder.Services.AddScoped<BibliotecaAPI.Servicios.V1.IServicioAutores, BibliotecaAPI.Servicios.V1.ServicioAutores>();
 builder.Services.AddScoped<BibliotecaAPI.Servicios.V1.IGeneradorEnlaces, BibliotecaAPI.Servicios.V1.GeneradorEnlaces>();
