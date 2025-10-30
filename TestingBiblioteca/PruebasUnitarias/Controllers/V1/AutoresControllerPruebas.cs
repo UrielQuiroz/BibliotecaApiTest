@@ -4,7 +4,10 @@ using BibliotecaAPI.Entidades;
 using BibliotecaAPI.Servicios;
 using BibliotecaAPI.Servicios.V1;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.Operations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -139,6 +142,8 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             Assert.AreEqual(expected: 1, actual: cantidad);
         }
 
+        #region PUT
+
         [TestMethod]
         public async Task Put_Retorna404_CuandoAutorNoExiste()
         {
@@ -238,5 +243,110 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             await outputCacheStore.Received(1).EvictByTagAsync(cache, default);
             await almacenadorArchivos.Received(1).Editar(urlAnterior, contenedor, formFile);
         }
+
+
+        #endregion
+
+        #region PATCH
+
+        [TestMethod]
+        public async Task Patch_Retorna400_CuandoPatchDocEsNulo()
+        {
+            //Prueba
+            var respuesta = await controller.Patch(1, patchDoc: null!);
+
+            //Verificacion
+            var resultado = respuesta as StatusCodeResult;
+            Assert.AreEqual(400, resultado!.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task Patch_Retorna404_CuandoAutorNoExiste()
+        {
+            //Preparacion
+            var patchDoc = new JsonPatchDocument<AutorPatchDTO>();
+
+            //Prueba
+            var respuesta = await controller.Patch(1, patchDoc);
+
+            //Verificacion
+            var resultado = respuesta as StatusCodeResult;
+            Assert.AreEqual(404, resultado!.StatusCode); 
+        }
+
+        [TestMethod]
+        public async Task Patch_RetornaValidationProblem_CuandoHayErrorDeValidacion()
+        {
+            //Preparacion
+            var context = ConstruirContext(nombreBD);
+            context.Autores.Add(new Autor
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "JSDNC65465"
+            });
+
+            await context.SaveChangesAsync();
+
+            var objectValidator = Substitute.For<IObjectModelValidator>();
+            controller.ObjectValidator = objectValidator;
+
+            var mensajeDeError = "mensaje de error";
+            controller.ModelState.AddModelError("", mensajeDeError);
+ 
+            var patchDoc = new JsonPatchDocument<AutorPatchDTO>();
+
+            //Prueba
+            var respuesta = await controller.Patch(1, patchDoc);
+
+            //Verificacion
+            var resultado = respuesta as ObjectResult;
+            var problemDetails = resultado!.Value as ValidationProblemDetails;
+            Assert.IsNotNull(problemDetails);
+            Assert.AreEqual(expected: 1, actual: problemDetails.Errors.Keys.Count);
+            Assert.AreEqual(expected: mensajeDeError, actual: problemDetails.Errors.Values.First().First());
+        }
+
+        [TestMethod]
+        public async Task Patch_ActualizaCampo_CuandoSeLeEnviaUnaOperacion()
+        {
+            //Preparacion
+            var context = ConstruirContext(nombreBD);
+            context.Autores.Add(new Autor
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "JSDNC65465",
+                Foto = "URL-1"
+            });
+
+            await context.SaveChangesAsync();
+
+            var objectValidator = Substitute.For<IObjectModelValidator>();
+            controller.ObjectValidator = objectValidator;
+ 
+            var patchDoc = new JsonPatchDocument<AutorPatchDTO>();
+            patchDoc.Operations.Add(new Operation<AutorPatchDTO>("replace", "/nombres", null, "Uriel 2"));
+
+            //Prueba
+            var respuesta = await controller.Patch(1, patchDoc);
+
+            //Verificacion
+            var resultado = respuesta as StatusCodeResult;
+            Assert.AreEqual(expected: 204, resultado!.StatusCode);
+
+            await outputCacheStore.Received(1).EvictByTagAsync(cache, default);
+
+            var context2 = ConstruirContext(nombreBD);
+            var autorBD = await context2.Autores.SingleAsync();
+
+            Assert.AreEqual(expected: "Uriel 2", autorBD.Nombres);
+            Assert.AreEqual(expected: "Quiroz", autorBD.Apellidos);
+            Assert.AreEqual(expected: "JSDNC65465", autorBD.Identificacion);
+            Assert.AreEqual(expected: "URL-1", autorBD.Foto);
+
+        }
+
+        #endregion
     }
 }
