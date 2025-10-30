@@ -75,6 +75,52 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             Assert.AreEqual(expected: 1, actual: resultado!.Id);
         }
 
+
+        [TestMethod]
+        public async Task Get_RetornaAutorConLibros_CuandoAutorTieneLibros()
+        {
+            //Preparacion
+            var nombreBD = Guid.NewGuid().ToString();
+            var context = ConstruirContext(nombreBD);
+            var mapper = ConfigurarAutoMapper();
+
+            IAlmacenadorArchivos almacenadorArchivos = null!;
+            ILogger<AutoresController> logger = null!;
+            IOutputCacheStore outputCacheStore = null!;
+            IServicioAutores servicioAutores = null!;
+
+            var libro1 = new Libro { Titulo = "Libro 1" };
+            var libro2 = new Libro { Titulo = "Libro 2" };
+
+            var autor = new Autor()
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "KSNDCJ5298",
+                Libros = new List<AutorLibro>
+                {
+                    new AutorLibro { Libro  = libro1 },
+                    new AutorLibro { Libro  = libro2 }
+                }
+            };
+
+            context.Add(autor);
+
+            await context.SaveChangesAsync();
+
+            var context2 = ConstruirContext(nombreBD);
+
+            var controller = new AutoresController(context2, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+
+            //Prueba
+            var respuesta = await controller.Get(1);
+
+            //Verificacion
+            var resultado = respuesta.Value;
+            Assert.AreEqual(expected: 1, actual: resultado!.Id);
+            Assert.AreEqual(expected: 2, actual: resultado!.Libros.Count);
+        }
+
         [TestMethod]
         public async Task Get_DebeLlamarGetDelServicioAutores()
         {
