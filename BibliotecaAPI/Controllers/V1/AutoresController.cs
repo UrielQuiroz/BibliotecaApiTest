@@ -218,7 +218,7 @@ namespace BibliotecaAPI.Controllers.V1
             context.Update(autor);
             await context.SaveChangesAsync();
             await outputCacheStore.EvictByTagAsync(cache, default);
-            return Ok();
+            return NoContent();
         }
 
         [HttpPatch("{id:int}", Name = "PatchAutorV1")]
