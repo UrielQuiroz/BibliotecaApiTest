@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +73,30 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             //Verificacion
             var resultado = respuesta.Value;
             Assert.AreEqual(expected: 1, actual: resultado!.Id);
+        }
+
+        [TestMethod]
+        public async Task Get_DebeLlamarGetDelServicioAutores()
+        {
+            //Preparacion
+            var nombreBD = Guid.NewGuid().ToString();
+            var context = ConstruirContext(nombreBD);
+            var mapper = ConfigurarAutoMapper();
+
+            IAlmacenadorArchivos almacenadorArchivos = null!;
+            ILogger<AutoresController> logger = null!;
+            IOutputCacheStore outputCacheStore = null!;
+            IServicioAutores servicioAutores = Substitute.For<IServicioAutores>();
+
+            var controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+
+            var paginacionDTO = new PaginacionDTO(2, 3);
+
+            //Prueba
+            await controller.Get(paginacionDTO);
+
+            //Verificacion
+            await servicioAutores.Received(1).Get(paginacionDTO);
         }
 
         [TestMethod]
