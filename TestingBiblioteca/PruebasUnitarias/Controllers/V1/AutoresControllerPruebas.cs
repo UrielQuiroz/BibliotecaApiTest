@@ -348,5 +348,51 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
         }
 
         #endregion
+
+        #region DELETE
+
+        [TestMethod]
+        public async Task Delete_Retorna404_CuandoAutorNoExiste()
+        {
+            //Prueba
+            var respuesta = await controller.Delete(1);
+
+            //Verificacion
+            var resultado = respuesta as StatusCodeResult;
+            Assert.AreEqual(404, resultado!.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task Delete_BorraAutor_CuandoAutorExiste()
+        {
+            //Preparacion
+            var urlFoto = "URL-1";
+
+            var context = ConstruirContext(nombreBD);
+
+            context.Autores.Add(new Autor { Nombres = "Uriel", Apellidos = "Quiroz", Identificacion = "123", Foto = urlFoto });
+            context.Autores.Add(new Autor { Nombres = "Uriel2", Apellidos = "Quiroz2", Identificacion = "1234" });
+
+            await context.SaveChangesAsync();
+
+            //Prueba
+            var respuesta = await controller.Delete(1);
+
+            //Verificacion 
+            var resultado = respuesta as StatusCodeResult;
+            Assert.AreEqual(204, resultado!.StatusCode);
+
+            var context2 = ConstruirContext(nombreBD);
+            var cantidadAutores = await context2.Autores.CountAsync();
+            Assert.AreEqual(expected: 1, actual: cantidadAutores);
+
+            var autor2Existe = await context2.Autores.AnyAsync(x => x.Nombres == "Uriel2");
+            Assert.IsTrue(autor2Existe);
+
+            await outputCacheStore.Received(1).EvictByTagAsync(cache, default);
+            await almacenadorArchivos.Received(1).Borrar(urlFoto, contenedor);
+        }
+
+        #endregion
     }
 }
