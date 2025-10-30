@@ -21,21 +21,30 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
     [TestClass]
     public class AutoresControllerPruebas : BasePruebas
     {
-        [TestMethod]
-        public async Task Get_Retorna404_CuandoAutorConIdNoExiste()
+        IAlmacenadorArchivos almacenadorArchivos = null!;
+        ILogger<AutoresController> logger = null!;
+        IOutputCacheStore outputCacheStore = null!;
+        IServicioAutores servicioAutores = null!;
+        private string nombreBD = Guid.NewGuid().ToString();
+        private AutoresController controller = null!;
+
+        [TestInitialize]
+        public void Setup()
         {
-            //Preparacion
-            var nombreBD = Guid.NewGuid().ToString();
             var context = ConstruirContext(nombreBD);
             var mapper = ConfigurarAutoMapper();
 
-            IAlmacenadorArchivos almacenadorArchivos = null!;
-            ILogger<AutoresController> logger = null!;
-            IOutputCacheStore outputCacheStore = null!;
-            IServicioAutores servicioAutores = null!;
+            almacenadorArchivos = Substitute.For<IAlmacenadorArchivos>();
+            logger = Substitute.For<ILogger<AutoresController>>();
+            outputCacheStore = Substitute.For<IOutputCacheStore>();
+            servicioAutores = Substitute.For<IServicioAutores>();
 
-            var controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+            controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+        }
 
+        [TestMethod]
+        public async Task Get_Retorna404_CuandoAutorConIdNoExiste()
+        {
             //Prueba
             var respuesta = await controller.Get(1);
 
@@ -49,23 +58,11 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
         public async Task Get_RetornaAutor_CuandoAutorConIdExiste() 
         {
             //Preparacion
-            var nombreBD = Guid.NewGuid().ToString();
             var context = ConstruirContext(nombreBD);
-            var mapper = ConfigurarAutoMapper();
-
-            IAlmacenadorArchivos almacenadorArchivos = null!;
-            ILogger<AutoresController> logger = null!;
-            IOutputCacheStore outputCacheStore = null!;
-            IServicioAutores servicioAutores = null!;
-
             context.Autores.Add(new Autor { Nombres = "Uriel", Apellidos = "Quiroz", Identificacion = "ALKMC684" });
             context.Autores.Add(new Autor { Nombres = "Gercia", Apellidos = "Marquez", Identificacion = "CIOWJD484" });
 
-            await context.SaveChangesAsync();
-
-            var context2 = ConstruirContext(nombreBD);
-
-            var controller = new AutoresController(context2, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+            await context.SaveChangesAsync(); 
 
             //Prueba
             var respuesta = await controller.Get(1);
@@ -80,14 +77,7 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
         public async Task Get_RetornaAutorConLibros_CuandoAutorTieneLibros()
         {
             //Preparacion
-            var nombreBD = Guid.NewGuid().ToString();
             var context = ConstruirContext(nombreBD);
-            var mapper = ConfigurarAutoMapper();
-
-            IAlmacenadorArchivos almacenadorArchivos = null!;
-            ILogger<AutoresController> logger = null!;
-            IOutputCacheStore outputCacheStore = null!;
-            IServicioAutores servicioAutores = null!;
 
             var libro1 = new Libro { Titulo = "Libro 1" };
             var libro2 = new Libro { Titulo = "Libro 2" };
@@ -105,12 +95,7 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             };
 
             context.Add(autor);
-
             await context.SaveChangesAsync();
-
-            var context2 = ConstruirContext(nombreBD);
-
-            var controller = new AutoresController(context2, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
 
             //Prueba
             var respuesta = await controller.Get(1);
@@ -125,17 +110,6 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
         public async Task Get_DebeLlamarGetDelServicioAutores()
         {
             //Preparacion
-            var nombreBD = Guid.NewGuid().ToString();
-            var context = ConstruirContext(nombreBD);
-            var mapper = ConfigurarAutoMapper();
-
-            IAlmacenadorArchivos almacenadorArchivos = null!;
-            ILogger<AutoresController> logger = null!;
-            IOutputCacheStore outputCacheStore = null!;
-            IServicioAutores servicioAutores = Substitute.For<IServicioAutores>();
-
-            var controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
-
             var paginacionDTO = new PaginacionDTO(2, 3);
 
             //Prueba
@@ -149,17 +123,8 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
         public async Task Post_DebeCrearAutor_CuandoEnviamosAutor()
         {
             //Preparacion
-            var nombreBD = Guid.NewGuid().ToString();
             var context = ConstruirContext(nombreBD);
-            var mapper = ConfigurarAutoMapper();
-
-            IAlmacenadorArchivos almacenadorArchivos = null!;
-            ILogger<AutoresController> logger = null!;
-            IOutputCacheStore outputCacheStore = new OutputCacheStoreFalso();
-            IServicioAutores servicioAutores = null!;
-
             var nuevoAutor = new AutorCreateDTO { Nombres = "Mesut", Apellidos = "Ozil", Identificacion = "LKSNDC9871984" };
-            var controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
 
             //Prueba
             var respuesta = await controller.Post(nuevoAutor);
