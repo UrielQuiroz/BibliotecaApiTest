@@ -1,9 +1,11 @@
 ﻿using BibliotecaAPI.Controllers.V1;
+using BibliotecaAPI.DTOs;
 using BibliotecaAPI.Entidades;
 using BibliotecaAPI.Servicios;
 using BibliotecaAPI.Servicios.V1;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TestingBiblioteca.Utilidades;
+using TestingBiblioteca.Utilidades.Dobles;
 
 namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
 {
@@ -69,6 +72,34 @@ namespace TestingBiblioteca.PruebasUnitarias.Controllers.V1
             //Verificacion
             var resultado = respuesta.Value;
             Assert.AreEqual(expected: 1, actual: resultado!.Id);
+        }
+
+        [TestMethod]
+        public async Task Post_DebeCrearAutor_CuandoEnviamosAutor()
+        {
+            //Preparacion
+            var nombreBD = Guid.NewGuid().ToString();
+            var context = ConstruirContext(nombreBD);
+            var mapper = ConfigurarAutoMapper();
+
+            IAlmacenadorArchivos almacenadorArchivos = null!;
+            ILogger<AutoresController> logger = null!;
+            IOutputCacheStore outputCacheStore = new OutputCacheStoreFalso();
+            IServicioAutores servicioAutores = null!;
+
+            var nuevoAutor = new AutorCreateDTO { Nombres = "Mesut", Apellidos = "Ozil", Identificacion = "LKSNDC9871984" };
+            var controller = new AutoresController(context, mapper, almacenadorArchivos, logger, outputCacheStore, servicioAutores);
+
+            //Prueba
+            var respuesta = await controller.Post(nuevoAutor);
+
+            //Verificacion
+            var resultado = respuesta as CreatedAtRouteResult;
+            Assert.IsNotNull(resultado);
+
+            var contexto2 = ConstruirContext(nombreBD);
+            var cantidad = await contexto2.Autores.CountAsync();
+            Assert.AreEqual(expected: 1, actual: cantidad);
         }
     }
 }
