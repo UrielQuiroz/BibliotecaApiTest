@@ -1,6 +1,7 @@
 ﻿using BibliotecaAPI.DTOs;
 using BibliotecaAPI.Entidades;
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 using TestingBiblioteca.Utilidades;
 
@@ -70,6 +71,61 @@ namespace TestingBiblioteca.PruebasDeIntegracion.Controllers.V1
 
             //Verificacion
             Assert.AreEqual(expected: HttpStatusCode.Unauthorized, actual: respuesta.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task Post_Devuelve403_CuandoUsuarioNoEsAdmin() 
+        {
+            //Preparacion
+            var factory = ConstruirWebApplicationFactory(nombreBD, ignorarSeguridad: false);
+            var token = await CrearUsuario(nombreBD, factory);
+
+            var cliente = factory.CreateClient();
+
+            cliente.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var autorCreacionDTO = new AutorCreateDTO
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "123"
+            };
+
+            //Prueba
+            var respuesta = await cliente.PostAsJsonAsync(url, autorCreacionDTO);
+
+            //Verificacion
+            Assert.AreEqual(expected: HttpStatusCode.Forbidden, actual: respuesta.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task Post_Devuelve201_CuandoUsuarioEsAdmin() 
+        {
+            //Preparacion
+            var factory = ConstruirWebApplicationFactory(nombreBD, ignorarSeguridad: false);
+
+            var claims = new List<Claim> {  adminClaim };
+
+            var token = await CrearUsuario(nombreBD, factory, claims);
+
+            var cliente = factory.CreateClient();
+
+            cliente.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var autorCreacionDTO = new AutorCreateDTO
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "123"
+            };
+
+            //Prueba
+            var respuesta = await cliente.PostAsJsonAsync(url, autorCreacionDTO);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            //Verificacion
+            Assert.AreEqual(expected: HttpStatusCode.Created, actual: respuesta.StatusCode);
         }
     }
 }
