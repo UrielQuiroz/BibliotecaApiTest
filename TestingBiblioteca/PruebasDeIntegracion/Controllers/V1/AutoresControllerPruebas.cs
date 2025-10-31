@@ -50,5 +50,26 @@ namespace TestingBiblioteca.PruebasDeIntegracion.Controllers.V1
 
             Assert.AreEqual(expected: 1, actual: autor.Id);
         }
+
+        [TestMethod]
+        public async Task Post_Devuelve401_CuandoUsuarioNoEstaAutenticado()
+        {
+            //Preparacion
+            var factory = ConstruirWebApplicationFactory(nombreBD, ignorarSeguridad: false);
+
+            var cliente = factory.CreateClient();
+            var autorCreacionDTO = new AutorCreateDTO
+            {
+                Nombres = "Uriel",
+                Apellidos = "Quiroz",
+                Identificacion = "123"
+            };
+
+            //Prueba
+            var respuesta = await cliente.PostAsJsonAsync(url, autorCreacionDTO);
+
+            //Verificacion
+            Assert.AreEqual(expected: HttpStatusCode.Unauthorized, actual: respuesta.StatusCode);
+        }
     }
 }
