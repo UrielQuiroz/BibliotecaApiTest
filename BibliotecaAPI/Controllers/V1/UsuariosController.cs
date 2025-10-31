@@ -186,7 +186,7 @@ namespace BibliotecaAPI.Controllers.V1
             var llave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["jwtKey"]!));
             var credenciales = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
 
-            var expiracion = DateTime.UtcNow.AddDays(1);
+            var expiracion = DateTime.UtcNow.AddYears(1);
 
             var tokenDeSeguridad = new 
                 JwtSecurityToken(issuer: null, audience: null, claims: claims, expires: expiracion, signingCredentials: credenciales);
