@@ -10,12 +10,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace TestingBiblioteca.Utilidades
 {
     public class BasePruebas
     {
+        protected readonly JsonSerializerOptions jsonSerializerOptions = 
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
         protected ApplicationDbContext ConstruirContext(string nombreBD)
         {
             var opciones = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -35,7 +39,7 @@ namespace TestingBiblioteca.Utilidades
             return config.CreateMapper();
         }
 
-        protected WebApplicationFactory<Program> CoonstruirWebApplicationFactory(string nombreBD, bool ignorarSeguridad = true)
+        protected WebApplicationFactory<Program> ConstruirWebApplicationFactory(string nombreBD, bool ignorarSeguridad = true)
         {
             var factory = new WebApplicationFactory<Program>();
 
