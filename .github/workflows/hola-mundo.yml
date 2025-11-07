@@ -3,14 +3,14 @@ name: Hola mundo
 on:
   workflow_dispatch: # ejecución manual
   push:
-    branches: 
+    branches:
       - main
     paths:
-      - 'BibliotecaAPi/**'
+      - 'BibliotecaAPI/**'
       - 'TestingBiblioteca/**'
-      - 'github/workflows/hola-mundo.yml'
+      - '.github/workflows/hola-mundo.yml'
   pull_request:
-    btanches:
+    branches:
       - main
 
 jobs:
@@ -18,19 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Muestra mensaje hola mundo
-        run: echo "hola munod, Uriel"
+        run: echo "Hola mundo, Uriel"
 
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Listar los archivos del repositorio
         run: |
-          echo "El repositorio ${{ github.repository }} contiene los siguientes archivos"
+          echo "El repositorio ${{ github.repository }} contiene los siguientes archivos:"
           tree
-
-
-
-
-
-
-        
